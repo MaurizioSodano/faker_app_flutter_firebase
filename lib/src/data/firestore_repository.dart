@@ -7,27 +7,31 @@ class FirestoreRepository {
   final FirebaseFirestore _firestore;
 
   Future<void> addJob(String uid, String title, String company) =>
-      _firestore.collection('jobs').add({
-        'uid': uid,
+      _firestore.collection('users/$uid/jobs').add({
         'title': title,
         'company': company,
+        'createdAt': FieldValue.serverTimestamp()
       });
   Future<void> updateJob(
           String uid, String jobId, String title, String company) =>
-      _firestore.doc('jobs/$jobId').update({
-        'uid': uid,
+      _firestore.doc('users/$uid/jobs/$jobId').update({
         'title': title,
         'company': company,
       });
-  Query<Job> jobsQuery() {
-    return _firestore.collection('jobs').withConverter(
+  Query<Job> jobsQuery(
+    String uid,
+  ) {
+    return _firestore
+        .collection('users/$uid/jobs')
+        .withConverter(
           fromFirestore: (snapshot, _) => Job.fromMap(snapshot.data()!),
           toFirestore: (job, _) => job.toMap(),
-        );
+        )
+        .orderBy('createdAt');
   }
 
   Future<void> deleteJob(String uid, String id) =>
-      _firestore.doc('jobs/$id').delete();
+      _firestore.doc('users/$uid/jobs/$id').delete();
 }
 
 final firestoreRepositoryProvider = Provider<FirestoreRepository>((ref) {
